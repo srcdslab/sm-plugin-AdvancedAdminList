@@ -12,6 +12,11 @@
 
 #define REBUILD_CACHE_WAIT_TIME 2.0
 
+#define MAX_SB_GROUPS			256
+#define MAX_COLOR_LEN			32
+
+#define ADMIN_CONFIG_OVERRIDE	"advancedadminlist.cfg"
+
 GroupId UNDEFINED_GROUP_ID = view_as<GroupId>(-2);
 AdminId UNDEFINED_ADMIN_ID = view_as<AdminId>(-2);
 
@@ -31,7 +36,9 @@ bool g_bMapEnd = false;
 Handle g_hDatabase = null;
 
 char g_sColorList[COLOR_LIST_MAX_LENGTH][2][COLOR_LIST_MAX_LENGTH];
+char g_sColorListOverride[COLOR_LIST_MAX_LENGTH][2][COLOR_LIST_MAX_LENGTH];
 int g_iColorListSize = 0;
+int g_iColorListOverrideSize = 0;
 
 public Plugin myinfo =
 {
@@ -54,15 +61,65 @@ public void OnPluginStart()
 	
 	AddCommandListener(Command_Admins, "sm_admins");
 
+	RegAdminCmd("sm_admins_reloadcfgoverride", Command_ReloadConfigOverride, ADMFLAG_CONFIG, "Reloads the config override file for colors");
+
 	AutoExecConfig(true);
 
 	SQLInitialize();
+
+	LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
 }
 
 public void OnPluginEnd()
 {
 	if (g_hDatabase != null)
 		delete g_hDatabase;
+}
+
+public Action Command_ReloadConfigOverride(int client, int argc)
+{
+	for (int i = 0; i < g_iColorListOverrideSize; i++)
+	{
+		g_sColorListOverride[i][0] = "";
+		g_sColorListOverride[i][1] = "";
+	}
+	g_iColorListOverrideSize = 0;
+
+	if (LoadConfigOverride(ADMIN_CONFIG_OVERRIDE))
+		CPrintToChat(client, "Successfully reloaded the admin config override");
+	else
+		CPrintToChat(client, "There was an error reloading the admin config override");
+	return Plugin_Handled;
+}
+
+stock bool LoadConfigOverride(char[] sFilename)
+{
+	char sFilepath[PLATFORM_MAX_PATH];
+	BuildPath(Path_SM, sFilepath, sizeof(sFilepath), "configs/%s", sFilename);
+
+	KeyValues kv = new KeyValues("AdvancedAdminList");
+
+	if (!kv.ImportFromFile(sFilepath))
+	{
+		LogMessage("File missing, please make sure \"%s\" is in the \"sourcemod/configs\" folder.", sFilename);
+		return false;
+	}
+
+	if (!kv.GotoFirstSubKey(false))
+	{
+		delete kv;
+		return false;
+	}
+
+	do
+	{
+		kv.GetSectionName(g_sColorListOverride[g_iColorListOverrideSize][0], sizeof(g_sColorListOverride[][]));
+		kv.GetString("color", g_sColorListOverride[g_iColorListOverrideSize][1], sizeof(g_sColorListOverride[][]));
+		g_iColorListOverrideSize++;
+	} while (kv.GotoNextKey(false));
+
+	delete kv;
+	return true;
 }
 
 stock void SQLInitialize()
@@ -217,7 +274,7 @@ public Action Command_Admins(int client, const char[] command, int argc)
 
 public void printAdminList(int client, char[][] resolveAdminsAndGroups, int resolvedAdminGroupsLength)
 {
-	CPrintToChat(client, "{green}[Source Mod] {lightgreen}Admins %s", resolvedAdminGroupsLength <= 0 ? "are offline" : "currently online:");
+	CPrintToChat(client, "{green}[SM] {lightgreen}Admins %s", resolvedAdminGroupsLength <= 0 ? "are offline" : "currently online:");
 
 	for (int i = 0; i < resolvedAdminGroupsLength; i++)
 		CPrintToChat(client, resolveAdminsAndGroups[i]);
@@ -345,12 +402,26 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 		else if (StrEqual(group, "VIP"))
 			gid = GetAdminGroup(names[resolvedAdminGroupsLength][y], 1, group, sizeof(group));
 
-		for (int i = 0; i < g_iColorListSize; i++)
+		bool bFoundOverride = false;
+		for (int i = 0; i < g_iColorListOverrideSize; i++)
 		{
-			if (StrEqual(g_sColorList[i][0], group, true))
+			if (StrEqual(g_sColorListOverride[i][0], group, true))
 			{
-				Format(groupColor, sizeof(groupColor), "{%s}", g_sColorList[i][1]);
+				Format(groupColor, sizeof(groupColor), "{%s}", g_sColorListOverride[i][1]);
+				bFoundOverride = true;
 				break;
+			}
+		}
+
+		if (!bFoundOverride)
+		{
+			for (int i = 0; i < g_iColorListSize; i++)
+			{
+				if (StrEqual(g_sColorList[i][0], group, true))
+				{
+					Format(groupColor, sizeof(groupColor), "{%s}", g_sColorList[i][1]);
+					break;
+				}
 			}
 		}
 
