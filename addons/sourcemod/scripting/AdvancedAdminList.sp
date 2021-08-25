@@ -58,7 +58,7 @@ public void OnPluginStart()
 	g_cAdminsRealNames.AddChangeHook(OnCvarChanged);
 
 	ReloadAdminList();
-	
+
 	AddCommandListener(Command_Admins, "sm_admins");
 
 	RegAdminCmd("sm_admins_reloadcfgoverride", Command_ReloadConfigOverride, ADMFLAG_CONFIG, "Reloads the config override file for colors");
@@ -272,12 +272,12 @@ public Action Command_Admins(int client, const char[] command, int argc)
 // ##       ##     ## ##   ### ##    ##    ##     ##  ##     ## ##   ### ##    ## 
 // ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
 
-public void printAdminList(int client, char[][] resolveAdminsAndGroups, int resolvedAdminGroupsLength)
+public void printAdminList(int client, char[][] resolvedAdminsAndGroups, int resolvedAdminGroupsLength)
 {
 	CPrintToChat(client, "{green}[SM] {lightgreen}Admins %s", resolvedAdminGroupsLength <= 0 ? "are offline" : "currently online:");
 
 	for (int i = 0; i < resolvedAdminGroupsLength; i++)
-		CPrintToChat(client, resolveAdminsAndGroups[i]);
+		CPrintToChat(client, resolvedAdminsAndGroups[i]);
 }
 
 public void ReloadAdminList()
@@ -438,6 +438,7 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 
 		while (names[resolvedAdminGroupsLength][y] != UNDEFINED_ADMIN_ID)
 		{
+			bufferAdminName = "";
 			if (gid == INVALID_GROUP_ID && !GetClientName(view_as<int>(names[resolvedAdminGroupsLength][y]), bufferName, sizeof(bufferName)))
 			{
 				Format(bufferName, sizeof(bufferName), "Disconnected: %d", names[resolvedAdminGroupsLength][y]);
@@ -446,7 +447,9 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 			else
 			{
 				names[resolvedAdminGroupsLength][y].GetUsername(bufferAdminName, sizeof(bufferAdminName));
-				if (g_cAdminsRealNames.BoolValue && GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferName, sizeof(bufferName)))
+				if (StrEqual("", bufferAdminName))
+					GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferAdminName, sizeof(bufferAdminName));
+				if (g_cAdminsRealNames.BoolValue && GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferName, sizeof(bufferName)) && !StrEqual(bufferName, bufferAdminName))
 					Format(name, sizeof(name), "%s (%s)", bufferAdminName, bufferName);
 				else
 					Format(name, sizeof(name), "%s", bufferAdminName);
@@ -463,7 +466,7 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 			}
 			y++;
 		}
-		resolvedAdminGroups[resolvedAdminGroupsLength] = buffer;
+		strcopy(resolvedAdminGroups[resolvedAdminGroupsLength], sizeof(resolvedAdminGroups[]), buffer);
 		resolvedAdminGroupsLength++;
 	}
 }
