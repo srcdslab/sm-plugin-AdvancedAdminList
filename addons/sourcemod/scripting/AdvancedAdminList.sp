@@ -22,6 +22,8 @@ char	g_sResolvedAdminGroups[MAXPLAYERS+1][MAX_BUFFER_SIZE];
 int 	g_iResolvedAdminGroupsLength = 0;
 
 ConVar g_cAdminsRealNames;
+ConVar g_cAdminsNameColor;
+ConVar g_cAdminsNameSeparatorColor;
 
 bool g_bReloadAdminList = false;
 bool g_bMapEnd = false;
@@ -42,7 +44,9 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	g_cAdminsRealNames = CreateConVar("sm_admins_real_names", "0", "0 = disabled, 1 = enable in game admin name display", 0, true, 0.0, true, 1.0);
+	g_cAdminsRealNames = CreateConVar("sm_admins_real_names", "1", "0 = disabled, 1 = enable in game admin name display", 0, true, 0.0, true, 1.0);
+	g_cAdminsNameColor = CreateConVar("sm_admins_name_color", "{green}", "What color should be displayed for admin names");
+	g_cAdminsNameSeparatorColor = CreateConVar("sm_admins_name_separator_color", "{default}", "What color should be displayed for separating admin names");
 
 	g_cAdminsRealNames.AddChangeHook(OnCvarChanged);
 
@@ -353,7 +357,13 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 		if (g_iColorListSize <= 0)
 			Format(groupColor, sizeof(groupColor), "{blue}");
 
-		Format(buffer, sizeof(buffer), "%s[%s] \x05", groupColor, group);
+		char sAdminNameColor[32];
+		g_cAdminsNameColor.GetString(sAdminNameColor, sizeof(sAdminNameColor));
+
+		char sAdminNameSeparatorColor[32];
+		g_cAdminsNameSeparatorColor.GetString(sAdminNameSeparatorColor, sizeof(sAdminNameSeparatorColor));
+
+		Format(buffer, sizeof(buffer), "%s[%s] %s", groupColor, group, sAdminNameColor);
 
 		while (names[resolvedAdminGroupsLength][y] != UNDEFINED_ADMIN_ID)
 		{
@@ -375,7 +385,9 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 				StrCat(buffer, sizeof(buffer), name);
 			else
 			{
-				StrCat(buffer, sizeof(buffer), "\x04, \x05");
+				char sSeparator[64];
+				Format(sSeparator, sizeof(sSeparator), "%s, %s", sAdminNameSeparatorColor, sAdminNameColor);
+				StrCat(buffer, sizeof(buffer), sSeparator);
 				StrCat(buffer, sizeof(buffer), name);
 			}
 			y++;
