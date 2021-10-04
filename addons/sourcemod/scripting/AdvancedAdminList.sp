@@ -337,7 +337,8 @@ public void getAdminsAndGroups(GroupId[] groups, AdminId[][] names)
 				while (j < iGroupCount)
 				{
 					gid = GetAdminGroup(aid, j, group, sizeof(group));
-					if (gid != INVALID_GROUP_ID && GetAdmGroupAddFlag(gid, Admin_Generic))
+					if (gid != INVALID_GROUP_ID && (GetAdmGroupAddFlag(gid, Admin_Generic)
+						|| GetAdmGroupAddFlag(gid, Admin_Root) || GetAdmGroupAddFlag(gid, Admin_RCON))
 						break;
 					j++;
 				}
