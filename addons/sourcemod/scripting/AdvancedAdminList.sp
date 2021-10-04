@@ -426,7 +426,7 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 			}
 		}
 
-		if (g_iColorListSize <= 0)
+		if (g_iColorListSize <= 0 && g_iColorListOverrideSize <= 0 && !bFoundOverride)
 			Format(groupColor, sizeof(groupColor), "{blue}");
 
 		char sAdminNameColor[32];
