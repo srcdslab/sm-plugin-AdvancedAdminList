@@ -24,11 +24,12 @@ GroupId	g_gGroups[MAXPLAYERS+1];
 AdminId	g_gAdmins[MAXPLAYERS+1][MAXPLAYERS+1];
 
 char	g_sResolvedAdminGroups[MAXPLAYERS+1][MAX_BUFFER_SIZE];
-int 	g_iResolvedAdminGroupsLength = 0;
+int		g_iResolvedAdminGroupsLength = 0;
 
 ConVar g_cAdminsRealNames;
 ConVar g_cAdminsNameColor;
 ConVar g_cAdminsNameSeparatorColor;
+ConVar g_cAdminsConfigMode;
 
 bool g_bReloadAdminList = false;
 bool g_bMapEnd = false;
@@ -54,6 +55,7 @@ public void OnPluginStart()
 	g_cAdminsRealNames = CreateConVar("sm_admins_real_names", "1", "0 = disabled, 1 = enable in game admin name display", 0, true, 0.0, true, 1.0);
 	g_cAdminsNameColor = CreateConVar("sm_admins_name_color", "{green}", "What color should be displayed for admin names");
 	g_cAdminsNameSeparatorColor = CreateConVar("sm_admins_name_separator_color", "{default}", "What color should be displayed for separating admin names");
+	g_cAdminsConfigMode = CreateConVar("sm_admins_config_mod", "2", "Configuration mode to load colors: 0 - SQL and .cfg overrides, 1 - SQL Only, 2 - .cfg only");
 
 	g_cAdminsRealNames.AddChangeHook(OnCvarChanged);
 
@@ -65,9 +67,11 @@ public void OnPluginStart()
 
 	AutoExecConfig(true);
 
-	SQLInitialize();
+	if (g_cAdminsConfigMode.IntValue == 0 || g_cAdminsConfigMode.IntValue == 1)
+		SQLInitialize();
 
-	LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
+	if (g_cAdminsConfigMode.IntValue == 0 || g_cAdminsConfigMode.IntValue == 2)
+		LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
 }
 
 public void OnPluginEnd()
