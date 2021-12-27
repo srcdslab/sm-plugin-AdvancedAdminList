@@ -401,11 +401,18 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 	{
 		y = 0;
 
-		GroupId gid = GetAdminGroup(names[resolvedAdminGroupsLength][y], 0, group, sizeof(group));
+		GroupId gid = INVALID_GROUP_ID;
+		int iGroupCount = GetAdminGroupCount(names[resolvedAdminGroupsLength][y]);
+
+		for (int i = 0; i < iGroupCount; i++)
+		{
+			// Find admin group that does not contain vip stuff
+			if (StrContains(group, "VIP", false) == -1)
+				gid = GetAdminGroup(names[resolvedAdminGroupsLength][y], i, group, sizeof(group));
+		}
+
 		if (gid == INVALID_GROUP_ID)
 			group = "Admin";
-		else if (StrEqual(group, "VIP"))
-			gid = GetAdminGroup(names[resolvedAdminGroupsLength][y], 1, group, sizeof(group));
 
 		bool bFoundOverride = false;
 		for (int i = 0; i < g_iColorListOverrideSize; i++)
