@@ -46,7 +46,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907",
 	description = "An advanced admin list system",
-	version = "2.0",
+	version = "2.0.0",
 	url = ""
 };
 
@@ -466,7 +466,7 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 				names[resolvedAdminGroupsLength][y].GetUsername(bufferAdminName, sizeof(bufferAdminName));
 				if (StrEqual("", bufferAdminName))
 					GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferAdminName, sizeof(bufferAdminName));
-				if (g_cAdminsRealNames.BoolValue && GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferName, sizeof(bufferName)) && !StrEqual(bufferName, bufferAdminName))
+				if (g_cAdminsRealNames.BoolValue && GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferName, sizeof(bufferName)) && !StrEqual(bufferName, bufferAdminName, false))
 					Format(name, sizeof(name), "%s (%s)", bufferAdminName, bufferName);
 				else
 					Format(name, sizeof(name), "%s", bufferAdminName);
