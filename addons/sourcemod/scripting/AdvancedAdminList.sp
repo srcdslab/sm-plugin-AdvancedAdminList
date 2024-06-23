@@ -46,7 +46,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907",
 	description = "An advanced admin list system",
-	version = "2.0.0",
+	version = "2.0.1",
 	url = ""
 };
 
@@ -422,7 +422,7 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 		bool bFoundOverride = false;
 		for (int i = 0; i < g_iColorListOverrideSize; i++)
 		{
-			if (StrEqual(g_sColorListOverride[i][0], group, true))
+			if (strcmp(g_sColorListOverride[i][0], group, true) == 0)
 			{
 				Format(groupColor, sizeof(groupColor), "{%s}", g_sColorListOverride[i][1]);
 				bFoundOverride = true;
@@ -434,7 +434,7 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 		{
 			for (int i = 0; i < g_iColorListSize; i++)
 			{
-				if (StrEqual(g_sColorList[i][0], group, true))
+				if (strcmp(g_sColorList[i][0], group, true) == 0)
 				{
 					Format(groupColor, sizeof(groupColor), "{%s}", g_sColorList[i][1]);
 					break;
@@ -464,9 +464,9 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 			else
 			{
 				names[resolvedAdminGroupsLength][y].GetUsername(bufferAdminName, sizeof(bufferAdminName));
-				if (StrEqual("", bufferAdminName))
+				if (strcmp("", bufferAdminName, false) == 0)
 					GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferAdminName, sizeof(bufferAdminName));
-				if (g_cAdminsRealNames.BoolValue && GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferName, sizeof(bufferName)) && !StrEqual(bufferName, bufferAdminName, false))
+				if (g_cAdminsRealNames.BoolValue && GetClientNameOfAdminId(names[resolvedAdminGroupsLength][y], bufferName, sizeof(bufferName)) && strcmp(bufferName, bufferAdminName, false) != 0)
 					Format(name, sizeof(name), "%s (%s)", bufferAdminName, bufferName);
 				else
 					Format(name, sizeof(name), "%s", bufferAdminName);
