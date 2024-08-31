@@ -46,7 +46,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907",
 	description = "An advanced admin list system",
-	version = "2.0.1",
+	version = "2.0.2",
 	url = ""
 };
 
@@ -198,7 +198,7 @@ public void OnCvarChanged(ConVar convar, const char[] oldValue, const char[] new
 public void OnRebuildAdminCache(AdminCachePart part)
 {
 	// Only do something if admins are being rebuild
-	if (part != AdminCache_Admins)
+	if (part == AdminCache_Overrides)
 		return;
 
 	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache);
