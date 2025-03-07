@@ -41,6 +41,8 @@ char g_sColorList[COLOR_LIST_MAX_LENGTH][2][COLOR_LIST_MAX_LENGTH];
 char g_sColorListOverride[COLOR_LIST_MAX_LENGTH][2][COLOR_LIST_MAX_LENGTH];
 int g_iColorListSize = 0;
 int g_iColorListOverrideSize = 0;
+char g_sConfigGroupOrder[COLOR_LIST_MAX_LENGTH][64];
+int g_iConfigGroupOrderSize = 0;
 
 public Plugin myinfo =
 {
@@ -57,11 +59,13 @@ public void OnPluginStart()
 	g_cAdminsNameColor = CreateConVar("sm_admins_name_color", "{green}", "What color should be displayed for admin names");
 	g_cAdminsNameSeparatorColor = CreateConVar("sm_admins_name_separator_color", "{default}", "What color should be displayed for separating admin names");
 	g_cAdminsConfigMode = CreateConVar("sm_admins_config_mod", "2", "Configuration mode to load colors: 0 - SQL and .cfg overrides, 1 - SQL Only, 2 - .cfg only", 0, true, 0.0, true, 2.0);
-	g_cAdminsSortMode = CreateConVar("sm_admins_sort_mode", "1", "Admin sorting mode: 0 = Alphabetical, 1 = By immunity level (highest to lowest)", 0, true, 0.0, true, 1.0);
+	g_cAdminsSortMode = CreateConVar("sm_admins_sort_mode", "1", "Admin sorting mode: 0 = Alphabetical, 1 = By immunity level (highest to lowest), 2 = By config file order", 0, true, 0.0, true, 2.0);
 
 	g_cAdminsRealNames.AddChangeHook(OnCvarChanged);
-
-	ReloadAdminList();
+	g_cAdminsNameColor.AddChangeHook(OnCvarChanged);
+	g_cAdminsNameSeparatorColor.AddChangeHook(OnCvarChanged);
+	g_cAdminsConfigMode.AddChangeHook(OnCvarChanged);
+	g_cAdminsSortMode.AddChangeHook(OnCvarChanged);
 
 	AddCommandListener(Command_Admins, "sm_admins");
 
@@ -74,6 +78,8 @@ public void OnPluginStart()
 
 	if (g_cAdminsConfigMode.IntValue == 0 || g_cAdminsConfigMode.IntValue == 2)
 		LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
+
+	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnPluginEnd()
@@ -84,12 +90,7 @@ public void OnPluginEnd()
 
 public Action Command_ReloadConfigOverride(int client, int argc)
 {
-	for (int i = 0; i < g_iColorListOverrideSize; i++)
-	{
-		g_sColorListOverride[i][0] = "";
-		g_sColorListOverride[i][1] = "";
-	}
-	g_iColorListOverrideSize = 0;
+	ResetColorListOverride();
 
 	if (LoadConfigOverride(ADMIN_CONFIG_OVERRIDE))
 		CPrintToChat(client, "Successfully reloaded the admin config override");
@@ -117,8 +118,17 @@ stock bool LoadConfigOverride(char[] sFilename)
 		return false;
 	}
 
+	// Reset the color list override
+	g_iColorListOverrideSize = 0;
+	g_iConfigGroupOrderSize = 0;
+
 	do
 	{
+		// Store the group order
+		kv.GetSectionName(g_sConfigGroupOrder[g_iConfigGroupOrderSize], sizeof(g_sConfigGroupOrder[]));
+		g_iConfigGroupOrderSize++;
+
+		// Store the color list override
 		kv.GetSectionName(g_sColorListOverride[g_iColorListOverrideSize][0], sizeof(g_sColorListOverride[][]));
 		kv.GetString("color", g_sColorListOverride[g_iColorListOverrideSize][1], sizeof(g_sColorListOverride[][]));
 		g_iColorListOverrideSize++;
@@ -194,7 +204,24 @@ public void OnSQLSelect_Color(Handle hParent, Handle hChild, const char[] err, a
 
 public void OnCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	ReloadAdminList();
+	if (convar == g_cAdminsConfigMode)
+	{
+		if (g_cAdminsConfigMode.IntValue == 0 || g_cAdminsConfigMode.IntValue == 1)
+			SQLInitialize();
+
+		if (g_cAdminsConfigMode.IntValue == 0 || g_cAdminsConfigMode.IntValue == 2)
+		{
+			ResetColorListOverride();
+			LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
+		}
+	}
+	else if (convar == g_cAdminsSortMode)
+	{
+		ResetColorListOverride();
+		LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
+	}
+
+	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnRebuildAdminCache(AdminCachePart part)
@@ -203,7 +230,7 @@ public void OnRebuildAdminCache(AdminCachePart part)
 	if (part == AdminCache_Overrides)
 		return;
 
-	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache);
+	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action Timer_RebuildCache(Handle hTimer)
@@ -215,6 +242,15 @@ public Action Timer_RebuildCache(Handle hTimer)
 public void OnMapStart()
 {
 	g_bMapEnd = false;
+
+	// Reload configuration at the start of each map
+	if (g_cAdminsConfigMode.IntValue == 0 || g_cAdminsConfigMode.IntValue == 2)
+	{
+		ResetColorListOverride();
+		LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
+	}
+
+	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnMapEnd()
@@ -391,12 +427,19 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 	int groupCount = 0;
 	while (groups[groupCount] != UNDEFINED_GROUP_ID && groupCount < MAXPLAYERS)
 		groupCount++;
-	
-	// Admin sorting alphabetically or by immunity level (highest to lowest)
-	if (g_cAdminsSortMode.IntValue == 0)
-		SortAdminGroupsAlphabetically(groups, names, groupCount);
-	else
-		SortAdminGroupsByImmunity(groups, names, groupCount);
+
+	// Admin sorting based on selected mode
+	switch (g_cAdminsSortMode.IntValue)
+	{
+		case 0:
+			SortAdminGroupsAlphabetically(groups, names, groupCount);
+		case 1:
+			SortAdminGroupsByImmunity(groups, names, groupCount);
+		case 2:
+			SortAdminGroupsByConfigOrder(groups, names, groupCount);
+		default:
+			SortAdminGroupsByImmunity(groups, names, groupCount);
+	}
 
 	char bufferName[MAX_NAME_LENGTH];
 	char bufferAdminName[MAX_NAME_LENGTH];
@@ -614,6 +657,87 @@ stock void SortAdminGroupsByImmunity(GroupId[] groups, AdminId[][] names, int co
 	}
 }
 
+stock void SortAdminGroupsByConfigOrder(GroupId[] groups, AdminId[][] names, int count)
+{
+	if (count <= 1 || g_iConfigGroupOrderSize <= 0)
+		return;
+
+	// Temporary group names and order indices
+	char group1[64], group2[64];
+	int order1, order2;
+
+	for (int i = 0; i < count - 1; i++)
+	{
+		bool swapped = false;
+
+		for (int j = 0; j < count - i - 1; j++)
+		{
+			// Reset group names and order indices for each comparison
+			strcopy(group1, sizeof(group1), "Admin");
+			strcopy(group2, sizeof(group2), "Admin");
+			order1 = g_iConfigGroupOrderSize; // Default to end of list if not found
+			order2 = g_iConfigGroupOrderSize;
+
+			// Get the group names
+			if (groups[j] != INVALID_GROUP_ID)
+			{
+				// Get the first group
+				AdminId aid = names[j][0];
+				int groupCount = GetAdminGroupCount(aid);
+
+				for (int g = 0; g < groupCount; g++)
+				{
+					GroupId gid = GetAdminGroup(aid, g, group1, sizeof(group1));
+					if (gid == groups[j])
+						break;
+				}
+			}
+
+			if (groups[j+1] != INVALID_GROUP_ID)
+			{
+				// Get the second group
+				AdminId aid = names[j+1][0];
+				int groupCount = GetAdminGroupCount(aid);
+
+				for (int g = 0; g < groupCount; g++)
+				{
+					GroupId gid = GetAdminGroup(aid, g, group2, sizeof(group2));
+					if (gid == groups[j+1])
+						break;
+				}
+			}
+
+			// Find the order of each group in the config file using partial matching in case of multiple groups
+			for (int k = 0; k < g_iConfigGroupOrderSize; k++)
+			{
+				// Check if config group contains the in-game group name or vice versa
+				if (StrContains(g_sConfigGroupOrder[k], group1, false) != -1 || StrContains(group1, g_sConfigGroupOrder[k], false) != -1)
+				{
+					if (k < order1) // Take the highest priority (lowest index)
+						order1 = k;
+				}
+
+				if (StrContains(g_sConfigGroupOrder[k], group2, false) != -1 || StrContains(group2, g_sConfigGroupOrder[k], false) != -1)
+				{
+					if (k < order2) // Take the highest priority (lowest index)
+						order2 = k;
+				}
+			}
+
+			// Sort by config order (lower index = higher priority)
+			if (order1 > order2)
+			{
+				SwapGroupsAndAdmins(groups, names, j, j+1);
+				swapped = true;
+			}
+		}
+
+		// If no swapping occurred in this pass, the array is already sorted
+		if (!swapped)
+			break;
+	}
+}
+
 stock void SwapGroupsAndAdmins(GroupId[] groups, AdminId[][] names, int i, int j)
 {
 	GroupId tempGroup = groups[i];
@@ -626,4 +750,14 @@ stock void SwapGroupsAndAdmins(GroupId[] groups, AdminId[][] names, int i, int j
 		names[i][k] = names[j][k];
 		names[j][k] = tempAdmin;
 	}
+}
+
+stock void ResetColorListOverride()
+{
+	for (int i = 0; i < g_iColorListOverrideSize; i++)
+	{
+		g_sColorListOverride[i][0] = "";
+		g_sColorListOverride[i][1] = "";
+	}
+	g_iColorListOverrideSize = 0;
 }
