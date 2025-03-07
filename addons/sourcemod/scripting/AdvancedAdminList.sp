@@ -30,6 +30,7 @@ ConVar g_cAdminsRealNames;
 ConVar g_cAdminsNameColor;
 ConVar g_cAdminsNameSeparatorColor;
 ConVar g_cAdminsConfigMode;
+ConVar g_cAdminsSortMode;
 
 bool g_bReloadAdminList = false;
 bool g_bMapEnd = false;
@@ -44,9 +45,9 @@ int g_iColorListOverrideSize = 0;
 public Plugin myinfo =
 {
 	name = "Advanced Admin List",
-	author = "maxime1907",
+	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.0.2",
+	version = "2.1.0",
 	url = ""
 };
 
@@ -55,7 +56,8 @@ public void OnPluginStart()
 	g_cAdminsRealNames = CreateConVar("sm_admins_real_names", "1", "0 = disabled, 1 = enable in game admin name display", 0, true, 0.0, true, 1.0);
 	g_cAdminsNameColor = CreateConVar("sm_admins_name_color", "{green}", "What color should be displayed for admin names");
 	g_cAdminsNameSeparatorColor = CreateConVar("sm_admins_name_separator_color", "{default}", "What color should be displayed for separating admin names");
-	g_cAdminsConfigMode = CreateConVar("sm_admins_config_mod", "2", "Configuration mode to load colors: 0 - SQL and .cfg overrides, 1 - SQL Only, 2 - .cfg only");
+	g_cAdminsConfigMode = CreateConVar("sm_admins_config_mod", "2", "Configuration mode to load colors: 0 - SQL and .cfg overrides, 1 - SQL Only, 2 - .cfg only", 0, true, 0.0, true, 2.0);
+	g_cAdminsSortMode = CreateConVar("sm_admins_sort_mode", "1", "Admin sorting mode: 0 = Alphabetical, 1 = By immunity level (highest to lowest)", 0, true, 0.0, true, 1.0);
 
 	g_cAdminsRealNames.AddChangeHook(OnCvarChanged);
 
@@ -386,6 +388,16 @@ public void getAdminsAndGroups(GroupId[] groups, AdminId[][] names)
 
 public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char resolvedAdminGroups[MAXPLAYERS+1][MAX_BUFFER_SIZE], int &resolvedAdminGroupsLength)
 {
+	int groupCount = 0;
+	while (groups[groupCount] != UNDEFINED_GROUP_ID && groupCount < MAXPLAYERS)
+		groupCount++;
+	
+	// Admin sorting alphabetically or by immunity level (highest to lowest)
+	if (g_cAdminsSortMode.IntValue == 0)
+		SortAdminGroupsAlphabetically(groups, names, groupCount);
+	else
+		SortAdminGroupsByImmunity(groups, names, groupCount);
+
 	char bufferName[MAX_NAME_LENGTH];
 	char bufferAdminName[MAX_NAME_LENGTH];
 	char name[MAX_NAME_LENGTH];
@@ -395,7 +407,7 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 	char buffer[MAX_BUFFER_SIZE];
 
 	resolvedAdminGroupsLength = 0;
-	int	y = 0;
+	int y = 0;
 
 	while (groups[resolvedAdminGroupsLength] != UNDEFINED_GROUP_ID)
 	{
@@ -517,4 +529,101 @@ bool IsValidClient(int client, bool nobots = true)
 		return false;
 	}
 	return IsClientInGame(client);
+}
+
+stock void SortAdminGroupsAlphabetically(GroupId[] groups, AdminId[][] names, int count)
+{
+	if (count <= 1)
+		return;
+
+	// Temporary group names
+	char group1[64], group2[64];
+
+	for (int i = 0; i < count - 1; i++)
+	{
+		bool swapped = false;
+
+		for (int j = 0; j < count - i - 1; j++)
+		{
+			// Reset group names to default for each comparison
+			strcopy(group1, sizeof(group1), "Admin");
+			strcopy(group2, sizeof(group2), "Admin");
+
+			// Get the group names
+			if (groups[j] != INVALID_GROUP_ID)
+			{
+				// Get the first group
+				AdminId aid = names[j][0]; // Use the first admin in the group
+				int groupCount = GetAdminGroupCount(aid);
+
+				for (int g = 0; g < groupCount; g++)
+				{
+					GroupId gid = GetAdminGroup(aid, g, group1, sizeof(group1));
+					if (gid == groups[j])
+						break;
+				}
+			}
+
+			if (groups[j+1] != INVALID_GROUP_ID)
+			{
+				// Get the second group
+				AdminId aid = names[j+1][0];
+				int groupCount = GetAdminGroupCount(aid);
+
+				for (int g = 0; g < groupCount; g++)
+				{
+					GroupId gid = GetAdminGroup(aid, g, group2, sizeof(group2));
+					if (gid == groups[j+1])
+						break;
+				}
+			}
+
+			// Sort alphabetically
+			if (strcmp(group1, group2, false) > 0)
+			{
+				SwapGroupsAndAdmins(groups, names, j, j+1);
+				swapped = true;
+			}
+		}
+
+		// If no swapping occurred in this pass, the array is already sorted
+		if (!swapped)
+			break;
+	}
+}
+
+stock void SortAdminGroupsByImmunity(GroupId[] groups, AdminId[][] names, int count)
+{
+	if (count <= 1)
+		return;
+
+	int immunity1, immunity2;
+
+	for (int i = 0; i < count - 1; i++)
+	{
+		for (int j = 0; j < count - i - 1; j++)
+		{
+			// Get the immunities of the groups
+			immunity1 = groups[j] != INVALID_GROUP_ID ? GetAdmGroupImmunityLevel(groups[j]) : 0;
+			immunity2 = groups[j+1] != INVALID_GROUP_ID ? GetAdmGroupImmunityLevel(groups[j+1]) : 0;
+
+			// Sort by immunity level (highest to lowest)
+			if (immunity1 < immunity2)
+				SwapGroupsAndAdmins(groups, names, j, j+1);
+		}
+	}
+}
+
+stock void SwapGroupsAndAdmins(GroupId[] groups, AdminId[][] names, int i, int j)
+{
+	GroupId tempGroup = groups[i];
+	groups[i] = groups[j];
+	groups[j] = tempGroup;
+
+	for (int k = 0; k < MAXPLAYERS+1; k++)
+	{
+		AdminId tempAdmin = names[i][k];
+		names[i][k] = names[j][k];
+		names[j][k] = tempAdmin;
+	}
 }
