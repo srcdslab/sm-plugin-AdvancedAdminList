@@ -24,7 +24,7 @@ GroupId	g_gGroups[MAXPLAYERS+1];
 AdminId	g_gAdmins[MAXPLAYERS+1][MAXPLAYERS+1];
 
 char	g_sResolvedAdminGroups[MAXPLAYERS+1][MAX_BUFFER_SIZE];
-int		g_iResolvedAdminGroupsLength = 0;
+int	g_iResolvedAdminGroupsLength = 0;
 
 ConVar g_cAdminsRealNames;
 ConVar g_cAdminsNameColor;
@@ -59,7 +59,7 @@ public void OnPluginStart()
 	g_cAdminsNameColor = CreateConVar("sm_admins_name_color", "{green}", "What color should be displayed for admin names");
 	g_cAdminsNameSeparatorColor = CreateConVar("sm_admins_name_separator_color", "{default}", "What color should be displayed for separating admin names");
 	g_cAdminsConfigMode = CreateConVar("sm_admins_config_mod", "2", "Configuration mode to load colors: 0 - SQL and .cfg overrides, 1 - SQL Only, 2 - .cfg only", 0, true, 0.0, true, 2.0);
-	g_cAdminsSortMode = CreateConVar("sm_admins_sort_mode", "1", "Admin sorting mode: 0 = Alphabetical, 1 = By immunity level (highest to lowest), 2 = By config file order", 0, true, 0.0, true, 2.0);
+	g_cAdminsSortMode = CreateConVar("sm_admins_sort_mode", "2", "Admin sorting mode: 0 = Alphabetical, 1 = By immunity level (highest to lowest), 2 = By config file order", 0, true, 0.0, true, 2.0);
 
 	g_cAdminsRealNames.AddChangeHook(OnCvarChanged);
 	g_cAdminsNameColor.AddChangeHook(OnCvarChanged);
