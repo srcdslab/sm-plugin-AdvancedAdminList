@@ -23,8 +23,8 @@ AdminId UNDEFINED_ADMIN_ID = view_as<AdminId>(-2);
 GroupId	g_gGroups[MAXPLAYERS+1];
 AdminId	g_gAdmins[MAXPLAYERS+1][MAXPLAYERS+1];
 
-char	g_sResolvedAdminGroups[MAXPLAYERS+1][MAX_BUFFER_SIZE];
-int		g_iResolvedAdminGroupsLength = 0;
+char g_sResolvedAdminGroups[MAXPLAYERS+1][MAX_BUFFER_SIZE];
+int g_iResolvedAdminGroupsLength = 0;
 
 ConVar g_cAdminsRealNames;
 ConVar g_cAdminsNameColor;
