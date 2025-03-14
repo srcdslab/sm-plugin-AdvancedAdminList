@@ -23,8 +23,8 @@ AdminId UNDEFINED_ADMIN_ID = view_as<AdminId>(-2);
 GroupId	g_gGroups[MAXPLAYERS+1];
 AdminId	g_gAdmins[MAXPLAYERS+1][MAXPLAYERS+1];
 
-char	g_sResolvedAdminGroups[MAXPLAYERS+1][MAX_BUFFER_SIZE];
-int	g_iResolvedAdminGroupsLength = 0;
+char g_sResolvedAdminGroups[MAXPLAYERS+1][MAX_BUFFER_SIZE];
+int g_iResolvedAdminGroupsLength = 0;
 
 ConVar g_cAdminsRealNames;
 ConVar g_cAdminsNameColor;
@@ -49,7 +49,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.0",
+	version = "2.1.1",
 	url = ""
 };
 
@@ -168,20 +168,19 @@ stock void OnSQLConnected(Handle hParent, Handle hChild, const char[] err, any d
 
 	}
 
-	SQLSelect_Colors(INVALID_HANDLE);
+	SQLSelect_Colors();
 }
 
 
-stock Action SQLSelect_Colors(Handle timer)
+stock void SQLSelect_Colors()
 {
 	if (g_hDatabase == null)
-		return Plugin_Stop;
+		return;
 
 	char sQuery[256];
 
 	Format(sQuery, sizeof(sQuery), "SELECT `name`, `color` FROM `sb_srvgroups`;");
 	SQL_TQuery(g_hDatabase, OnSQLSelect_Color, sQuery, 0, DBPrio_High);
-	return Plugin_Stop;
 }
 
 public void OnSQLSelect_Color(Handle hParent, Handle hChild, const char[] err, any client)
