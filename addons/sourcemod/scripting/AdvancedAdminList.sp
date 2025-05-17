@@ -10,7 +10,7 @@
 
 #define MAX_BUFFER_SIZE			1024
 
-#define REBUILD_CACHE_WAIT_TIME 2.0
+#define REBUILD_CACHE_WAIT_TIME 5.0
 
 #define MAX_SB_GROUPS			256
 #define MAX_COLOR_LEN			32
@@ -34,6 +34,7 @@ ConVar g_cAdminsSortMode;
 
 bool g_bReloadAdminList = false;
 bool g_bMapEnd = false;
+bool g_bRebuildInProgress = false;
 
 Handle g_hDatabase = null;
 
@@ -49,7 +50,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.1",
+	version = "2.1.2",
 	url = ""
 };
 
@@ -234,7 +235,16 @@ public void OnRebuildAdminCache(AdminCachePart part)
 
 public Action Timer_RebuildCache(Handle hTimer)
 {
+	if (g_bRebuildInProgress)
+	{
+		// If a rebuild is already in progress, schedule another one
+		CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
+		return Plugin_Stop;
+	}
+
+	g_bRebuildInProgress = true;
 	ReloadAdminList();
+	g_bRebuildInProgress = false;
 	return Plugin_Stop;
 }
 
@@ -265,7 +275,7 @@ public void OnClientPostAdminCheck(int client)
 	AdminId aid = GetUserAdmin(client);
 
 	if (GetAdminFlag(aid, Admin_Generic))
-		ReloadAdminList();
+		CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnClientDisconnect(int client)
@@ -276,7 +286,10 @@ public void OnClientDisconnect(int client)
 	AdminId aid = GetUserAdmin(client);
 
 	if (GetAdminFlag(aid, Admin_Generic))
+	{
 		g_bReloadAdminList = true;
+		CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
+	}
 }
 
 public void OnClientDisconnect_Post(int client)
