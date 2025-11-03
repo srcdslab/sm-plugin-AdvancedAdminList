@@ -50,7 +50,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.2",
+	version = "2.1.3",
 	url = ""
 };
 
@@ -311,7 +311,7 @@ public void OnClientDisconnect_Post(int client)
 
 public Action Command_Admins(int client, const char[] command, int argc)
 {
-	if (!IsValidClient(client))
+	if (!client)
 		return Plugin_Continue;
 
 	printAdminList(client, g_sResolvedAdminGroups, g_iResolvedAdminGroupsLength);
@@ -379,7 +379,7 @@ public void getAdminsAndGroups(GroupId[] groups, AdminId[][] names)
 	i = 1;
 	while (i <= MaxClients)
 	{
-		if (IsValidClient(i))
+		if (IsClientInGame(i) && !IsFakeClient(i))
 		{
 			AdminId aid = GetUserAdmin(i);
 
@@ -559,7 +559,7 @@ public int GetClientOfAdminId(AdminId aid)
 {
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (IsValidClient(i))
+		if (IsClientInGame(i) && !IsFakeClient(i))
 		{
 			AdminId foundAid = GetUserAdmin(i);
 			if (aid == foundAid)
@@ -575,15 +575,6 @@ public bool GetClientNameOfAdminId(AdminId aid, char[] name, int maxlen)
 	if (!client)
 		return false;
 	return GetClientName(client, name, maxlen);
-}
-
-bool IsValidClient(int client, bool nobots = true)
-{
-	if (client <= 0 || client > MaxClients || !IsClientConnected(client) || (nobots && IsFakeClient(client)))
-	{
-		return false;
-	}
-	return IsClientInGame(client);
 }
 
 stock void SortAdminGroupsAlphabetically(GroupId[] groups, AdminId[][] names, int count)
