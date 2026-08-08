@@ -18,6 +18,13 @@ project:
         - source: /addons/sourcemod/scripting/include
           dest: /addons/sourcemod/scripting/include
 
+    - name: SourceBans++
+      type: git
+      repo: https://github.com/sbpp/sourcebans-pp
+      unpack:
+        - source: /game/addons/sourcemod/scripting/include
+          dest: /addons/sourcemod/scripting/include
+
   root: /
   output: /addons/sourcemod/plugins
 

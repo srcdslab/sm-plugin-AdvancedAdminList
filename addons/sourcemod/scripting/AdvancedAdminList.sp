@@ -2,6 +2,7 @@
 
 #include <sourcemod>
 #include <multicolors>
+#include <sourcebanspp>
 
 #pragma newdecls required
 
@@ -267,7 +268,7 @@ public void OnMapEnd()
 	g_bMapEnd = true;
 }
 
-public void OnClientPostAdminCheck(int client)
+public void SBPP_OnClientPostAdminCheck(int client)
 {
 	if (g_bMapEnd)
 		return;
