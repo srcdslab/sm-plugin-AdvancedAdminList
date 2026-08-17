@@ -17,21 +17,23 @@ This repository contains a SourcePawn plugin for SourceMod that provides an adva
 ## Technical Environment
 
 - **Language**: SourcePawn
-- **Platform**: SourceMod 1.11.0+ (latest stable recommended)
-- **Build Tool**: SourceKnight (configured via `sourceknight.yaml`)
-- **Compiler**: SourcePawn compiler (spcomp) via SourceKnight
+- **Platform**: SourceMod 1.12.0+ (latest stable recommended)
+- **Build Tool**: Native GitHub Actions workflow (`.github/workflows/ci.yml`)
+- **Compiler**: SourcePawn compiler (spcomp) via `rumblefrog/setup-sp`
 - **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`)
 
 ## Development Setup
 
 ### Dependencies
-- **SourceMod**: 1.11.0-git6917 (auto-downloaded by SourceKnight)
-- **MultiColors**: Latest from srcdslab/sm-plugin-MultiColors (auto-downloaded)
+- **SourceMod**: 1.12.x (installed by the CI workflow via `rumblefrog/setup-sp`)
+- **MultiColors**: Latest from srcdslab/sm-plugin-MultiColors (cloned by the CI workflow)
 
 ### Build Process
 ```bash
-# SourceKnight handles dependency management and compilation
-# No manual setup required - dependencies are automatically fetched
+# The CI workflow clones dependencies and compiles with spcomp directly.
+# To build locally, clone srcdslab/sm-plugin-MultiColors, copy its
+# addons/sourcemod/scripting/include contents next to this plugin's
+# scripting folder, then run spcomp on AdvancedAdminList.sp.
 ```
 
 ### File Structure
@@ -102,7 +104,7 @@ addons/sourcemod/
 4. Test database connectivity if using SourceBans
 
 ### Code Validation
-- Plugin compiles without warnings via SourceKnight
+- Plugin compiles without warnings via the GitHub Actions CI workflow
 - Follow SourcePawn memory management best practices
 - Ensure proper error handling for database operations
 
@@ -122,7 +124,7 @@ addons/sourcemod/
 ## Common Issues & Solutions
 
 ### Build Issues
-- Ensure all dependencies are properly declared in `sourceknight.yaml`
+- Ensure all dependencies are properly declared in `.github/workflows/ci.yml`
 - Check SourceMod version compatibility
 - Verify include files are accessible
 
@@ -162,8 +164,7 @@ addons/sourcemod/
 
 - **Main plugin** (`AdvancedAdminList.sp`): Core logic changes
 - **Config file** (`advancedadminlist.cfg`): Group colors and display order
-- **Build config** (`sourceknight.yaml`): Dependencies and build targets
-- **CI/CD** (`.github/workflows/ci.yml`): Build and release automation
+- **CI/CD** (`.github/workflows/ci.yml`): Dependencies, build targets, and release automation
 
 ## SourcePawn-Specific Guidelines
 
