@@ -50,7 +50,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.4",
+	version = "2.1.5",
 	url = ""
 };
 
@@ -145,22 +145,22 @@ stock void SQLInitialize()
 		delete g_hDatabase;
 
 	if (SQL_CheckConfig(DATABASE_NAME))
-		SQL_TConnect(OnSQLConnected, DATABASE_NAME);
+		Database.Connect(OnSQLConnected, DATABASE_NAME);
 	else
 		SetFailState("Could not find \"%s\" entry in databases.cfg.", DATABASE_NAME);
 }
 
-stock void OnSQLConnected(Handle hParent, Handle hChild, const char[] err, any data)
+public void OnSQLConnected(Database db, const char[] err, any data)
 {
-	if (hChild == null)
+	if (db == null)
 	{
 		LogError("Failed to connect to database \"%s\". (%s)", DATABASE_NAME, err);
 		return;
 	}
 
 	char sDriver[16];
-	g_hDatabase = CloneHandle(hChild);
-	SQL_GetDriverIdent(hParent, sDriver, sizeof(sDriver));
+	g_hDatabase = db;
+	db.Driver.GetIdentifier(sDriver, sizeof(sDriver));
 
 	if (strncmp(sDriver, "my", 2, false))
 	{
