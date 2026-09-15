@@ -10,12 +10,12 @@
 
 #define MAX_BUFFER_SIZE			1024
 
-#define REBUILD_CACHE_WAIT_TIME 5.0
-
 #define MAX_SB_GROUPS			256
 #define MAX_COLOR_LEN			32
 
 #define ADMIN_CONFIG_OVERRIDE	"advancedadminlist.cfg"
+
+#define REBUILD_CAHCE_TIME_AFTER_ADMIN_ACTION 2.0
 
 GroupId UNDEFINED_GROUP_ID = view_as<GroupId>(-2);
 AdminId UNDEFINED_ADMIN_ID = view_as<AdminId>(-2);
@@ -31,6 +31,7 @@ ConVar g_cAdminsNameColor;
 ConVar g_cAdminsNameSeparatorColor;
 ConVar g_cAdminsConfigMode;
 ConVar g_cAdminsSortMode;
+ConVar g_cvRebuildCacheTime;
 
 bool g_bReloadAdminList = false;
 bool g_bMapEnd = false;
@@ -45,12 +46,14 @@ int g_iColorListOverrideSize = 0;
 char g_sConfigGroupOrder[COLOR_LIST_MAX_LENGTH][64];
 int g_iConfigGroupOrderSize = 0;
 
+float g_fRebuildCacheTime;
+
 public Plugin myinfo =
 {
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.5",
+	version = "2.1.6",
 	url = ""
 };
 
@@ -61,12 +64,16 @@ public void OnPluginStart()
 	g_cAdminsNameSeparatorColor = CreateConVar("sm_admins_name_separator_color", "{default}", "What color should be displayed for separating admin names");
 	g_cAdminsConfigMode = CreateConVar("sm_admins_config_mod", "2", "Configuration mode to load colors: 0 - SQL and .cfg overrides, 1 - SQL Only, 2 - .cfg only", 0, true, 0.0, true, 2.0);
 	g_cAdminsSortMode = CreateConVar("sm_admins_sort_mode", "2", "Admin sorting mode: 0 = Alphabetical, 1 = By immunity level (highest to lowest), 2 = By config file order", 0, true, 0.0, true, 2.0);
+	g_cvRebuildCacheTime = CreateConVar("sm_admins_rebuild_cache_time", "45.0", "Time in seconds after map start to rebuild adminlist cache", _, true, 1.0, true, 120.0);
+
+	g_fRebuildCacheTime = g_cvRebuildCacheTime.FloatValue;
 
 	g_cAdminsRealNames.AddChangeHook(OnCvarChanged);
 	g_cAdminsNameColor.AddChangeHook(OnCvarChanged);
 	g_cAdminsNameSeparatorColor.AddChangeHook(OnCvarChanged);
 	g_cAdminsConfigMode.AddChangeHook(OnCvarChanged);
 	g_cAdminsSortMode.AddChangeHook(OnCvarChanged);
+	g_cvRebuildCacheTime.AddChangeHook(OnCvarChanged);
 
 	AddCommandListener(Command_Admins, "sm_admins");
 
@@ -79,8 +86,6 @@ public void OnPluginStart()
 
 	if (g_cAdminsConfigMode.IntValue == 0 || g_cAdminsConfigMode.IntValue == 2)
 		LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
-
-	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnPluginEnd()
@@ -220,8 +225,12 @@ public void OnCvarChanged(ConVar convar, const char[] oldValue, const char[] new
 		ResetColorListOverride();
 		LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
 	}
+	else if (convar == g_cvRebuildCacheTime)
+	{
+		g_fRebuildCacheTime = convar.FloatValue;
+	}
 
-	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(g_fRebuildCacheTime, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnRebuildAdminCache(AdminCachePart part)
@@ -230,7 +239,7 @@ public void OnRebuildAdminCache(AdminCachePart part)
 	if (part == AdminCache_Overrides)
 		return;
 
-	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(REBUILD_CAHCE_TIME_AFTER_ADMIN_ACTION, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action Timer_RebuildCache(Handle hTimer)
@@ -238,7 +247,7 @@ public Action Timer_RebuildCache(Handle hTimer)
 	if (g_bRebuildInProgress)
 	{
 		// If a rebuild is already in progress, schedule another one
-		CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(g_fRebuildCacheTime, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 		return Plugin_Stop;
 	}
 
@@ -259,7 +268,7 @@ public void OnMapStart()
 		LoadConfigOverride(ADMIN_CONFIG_OVERRIDE);
 	}
 
-	CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(g_fRebuildCacheTime, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnMapEnd()
@@ -275,7 +284,7 @@ public void OnClientPostAdminCheck(int client)
 	AdminId aid = GetUserAdmin(client);
 
 	if (GetAdminFlag(aid, Admin_Generic))
-		CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(REBUILD_CAHCE_TIME_AFTER_ADMIN_ACTION, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnClientDisconnect(int client)
@@ -288,7 +297,7 @@ public void OnClientDisconnect(int client)
 	if (GetAdminFlag(aid, Admin_Generic))
 	{
 		g_bReloadAdminList = true;
-		CreateTimer(REBUILD_CACHE_WAIT_TIME, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(REBUILD_CAHCE_TIME_AFTER_ADMIN_ACTION, Timer_RebuildCache, _, TIMER_FLAG_NO_MAPCHANGE);
 	}
 }
 
