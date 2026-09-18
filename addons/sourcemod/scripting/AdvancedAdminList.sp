@@ -400,8 +400,7 @@ public void getAdminsAndGroups(GroupId[] groups, AdminId[][] names)
 				while (j < iGroupCount)
 				{
 					GroupId tempGid = GetAdminGroup(aid, j, group, sizeof(group));
-					if (tempGid != INVALID_GROUP_ID && (GetAdmGroupAddFlag(tempGid, Admin_Generic)
-						|| GetAdmGroupAddFlag(tempGid, Admin_Root) || GetAdmGroupAddFlag(tempGid, Admin_RCON)))
+					if (tempGid != INVALID_GROUP_ID && (GetAdmGroupAddFlag(tempGid, Admin_Generic) || GetAdmGroupAddFlag(tempGid, Admin_Root) || GetAdmGroupAddFlag(tempGid, Admin_RCON)))
 					{
 						gid = tempGid;
 						break;
