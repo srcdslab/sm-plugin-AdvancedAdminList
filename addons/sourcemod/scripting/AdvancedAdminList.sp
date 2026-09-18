@@ -53,7 +53,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.6",
+	version = "2.1.7",
 	url = ""
 };
 
@@ -399,18 +399,19 @@ public void getAdminsAndGroups(GroupId[] groups, AdminId[][] names)
 				GroupId gid = INVALID_GROUP_ID;
 				while (j < iGroupCount)
 				{
-					gid = GetAdminGroup(aid, j, group, sizeof(group));
-					if (gid != INVALID_GROUP_ID && (GetAdmGroupAddFlag(gid, Admin_Generic)
-						|| GetAdmGroupAddFlag(gid, Admin_Root) || GetAdmGroupAddFlag(gid, Admin_RCON)))
+					GroupId tempGid = GetAdminGroup(aid, j, group, sizeof(group));
+					if (tempGid != INVALID_GROUP_ID && (GetAdmGroupAddFlag(tempGid, Admin_Generic) || GetAdmGroupAddFlag(tempGid, Admin_Root) || GetAdmGroupAddFlag(tempGid, Admin_RCON)))
+					{
+						gid = tempGid;
 						break;
+					}
 					j++;
 				}
 
-				if (j >= iGroupCount)
-				{
-					i++;
-					continue;
-				}
+				// No group explicitly grants the admin flags (e.g. flags assigned directly to
+				// the admin, or only non-admin groups like VIP): still list them under "Admin"
+				// instead of dropping them, since GetAdminFlag(aid, Admin_Generic) already confirmed
+				// they are a genuine admin.
 
 				y = 0;
 				while (groups[y] != UNDEFINED_GROUP_ID)
@@ -420,10 +421,7 @@ public void getAdminsAndGroups(GroupId[] groups, AdminId[][] names)
 						z = 0;
 						while (names[y][z] != UNDEFINED_ADMIN_ID)
 							z++;
-						if (gid == INVALID_GROUP_ID)
-							names[y][0] = view_as<AdminId>(i);
-						else
-							names[y][z] = aid;
+						names[y][z] = aid;
 						break;
 					}
 					y++;
@@ -432,10 +430,7 @@ public void getAdminsAndGroups(GroupId[] groups, AdminId[][] names)
 				if (groups[y] == UNDEFINED_GROUP_ID)
 				{
 					groups[y] = gid;
-					if (gid == INVALID_GROUP_ID)
-						names[y][0] = view_as<AdminId>(i);
-					else
-						names[y][0] = aid;
+					names[y][0] = aid;
 				}
 			}
 		}
@@ -532,7 +527,7 @@ public void resolveAdminsAndGroups(GroupId[] groups, AdminId[][] names, char res
 		while (names[resolvedAdminGroupsLength][y] != UNDEFINED_ADMIN_ID)
 		{
 			bufferAdminName = "";
-			if (gid == INVALID_GROUP_ID && !GetClientName(view_as<int>(names[resolvedAdminGroupsLength][y]), bufferName, sizeof(bufferName)))
+			if (gid == INVALID_GROUP_ID && !GetClientName(GetClientOfAdminId(names[resolvedAdminGroupsLength][y]), bufferName, sizeof(bufferName)))
 			{
 				Format(bufferName, sizeof(bufferName), "Disconnected: %d", names[resolvedAdminGroupsLength][y]);
 				Format(name, sizeof(name), "%s", bufferName);
