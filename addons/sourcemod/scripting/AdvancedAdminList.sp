@@ -340,7 +340,7 @@ public void printAdminList(int client, char[][] resolvedAdminsAndGroups, int res
 	CPrintToChat(client, "{green}[SM] {lightgreen}Admins %s", resolvedAdminGroupsLength <= 0 ? "are offline" : "currently online:");
 
 	for (int i = 0; i < resolvedAdminGroupsLength; i++)
-		CPrintToChat(client, resolvedAdminsAndGroups[i]);
+		CPrintToChat(client, "%s", resolvedAdminsAndGroups[i]);
 }
 
 public void ReloadAdminList()
