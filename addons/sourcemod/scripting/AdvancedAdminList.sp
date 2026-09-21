@@ -53,7 +53,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.7",
+	version = "2.1.8",
 	url = ""
 };
 
@@ -340,7 +340,7 @@ public void printAdminList(int client, char[][] resolvedAdminsAndGroups, int res
 	CPrintToChat(client, "{green}[SM] {lightgreen}Admins %s", resolvedAdminGroupsLength <= 0 ? "are offline" : "currently online:");
 
 	for (int i = 0; i < resolvedAdminGroupsLength; i++)
-		CPrintToChat(client, resolvedAdminsAndGroups[i]);
+		CPrintToChat(client, "%s", resolvedAdminsAndGroups[i]);
 }
 
 public void ReloadAdminList()
