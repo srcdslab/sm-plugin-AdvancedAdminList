@@ -37,7 +37,7 @@ bool g_bReloadAdminList = false;
 bool g_bMapEnd = false;
 bool g_bRebuildInProgress = false;
 
-Handle g_hDatabase = null;
+Database g_hDatabase = null;
 
 char g_sColorList[COLOR_LIST_MAX_LENGTH][2][COLOR_LIST_MAX_LENGTH];
 char g_sColorListOverride[COLOR_LIST_MAX_LENGTH][2][COLOR_LIST_MAX_LENGTH];
@@ -53,7 +53,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.8",
+	version = "2.1.9",
 	url = ""
 };
 
@@ -186,10 +186,10 @@ stock void SQLSelect_Colors()
 	char sQuery[256];
 
 	Format(sQuery, sizeof(sQuery), "SELECT `name`, `color` FROM `sb_srvgroups`;");
-	SQL_TQuery(g_hDatabase, OnSQLSelect_Color, sQuery, 0, DBPrio_High);
+	g_hDatabase.Query(OnSQLSelect_Color, sQuery, 0, DBPrio_High);
 }
 
-public void OnSQLSelect_Color(Handle hParent, Handle hChild, const char[] err, any client)
+public void OnSQLSelect_Color(Database hParent, DBResultSet hChild, const char[] err, any client)
 {
 	if (hChild == null)
 	{
@@ -197,10 +197,10 @@ public void OnSQLSelect_Color(Handle hParent, Handle hChild, const char[] err, a
 		return;
 	}
 
-	while (SQL_FetchRow(hChild))
+	while (hChild.FetchRow())
 	{
-		SQL_FetchString(hChild, 0, g_sColorList[g_iColorListSize][0], sizeof(g_sColorList[][]));
-		SQL_FetchString(hChild, 1, g_sColorList[g_iColorListSize][1], sizeof(g_sColorList[][]));
+		hChild.FetchString(0, g_sColorList[g_iColorListSize][0], sizeof(g_sColorList[][]));
+		hChild.FetchString(1, g_sColorList[g_iColorListSize][1], sizeof(g_sColorList[][]));
 		g_iColorListSize++;
 	}
 
