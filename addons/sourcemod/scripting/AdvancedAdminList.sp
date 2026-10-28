@@ -38,6 +38,8 @@ bool g_bMapEnd = false;
 bool g_bRebuildInProgress = false;
 
 Database g_hDatabase = null;
+bool g_bSQLConnecting = false;
+Handle g_hSQLRetryTimer = null;
 
 char g_sColorList[COLOR_LIST_MAX_LENGTH][2][COLOR_LIST_MAX_LENGTH];
 char g_sColorListOverride[COLOR_LIST_MAX_LENGTH][2][COLOR_LIST_MAX_LENGTH];
@@ -53,7 +55,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.9",
+	version = "2.1.10",
 	url = ""
 };
 
@@ -146,35 +148,61 @@ stock bool LoadConfigOverride(char[] sFilename)
 
 stock void SQLInitialize()
 {
+	// Keep the connection we already have, just reload the colors
 	if (g_hDatabase != null)
-		delete g_hDatabase;
+	{
+		SQLSelect_Colors();
+		return;
+	}
+
+	// The pending connect will load the colors
+	if (g_bSQLConnecting)
+		return;
 
 	if (SQL_CheckConfig(DATABASE_NAME))
+	{
+		g_bSQLConnecting = true;
 		Database.Connect(OnSQLConnected, DATABASE_NAME);
+	}
 	else
 		SetFailState("Could not find \"%s\" entry in databases.cfg.", DATABASE_NAME);
 }
 
 public void OnSQLConnected(Database db, const char[] err, any data)
 {
+	g_bSQLConnecting = false;
+
 	if (db == null)
 	{
-		LogError("Failed to connect to database \"%s\". (%s)", DATABASE_NAME, err);
+		LogError("Failed to connect to database \"%s\", retrying in 30 seconds. (%s)", DATABASE_NAME, err);
+		if (g_hSQLRetryTimer == null)
+			g_hSQLRetryTimer = CreateTimer(30.0, Timer_SQLRetry);
 		return;
 	}
 
 	char sDriver[16];
-	g_hDatabase = db;
 	db.Driver.GetIdentifier(sDriver, sizeof(sDriver));
 
 	if (strncmp(sDriver, "my", 2, false))
 	{
 		LogError("Only mysql is supported for \"%s\".", DATABASE_NAME);
+		delete db;
 		return;
-
 	}
 
+	g_hDatabase = db;
+
 	SQLSelect_Colors();
+}
+
+public Action Timer_SQLRetry(Handle hTimer)
+{
+	g_hSQLRetryTimer = null;
+
+	if (g_cAdminsConfigMode.IntValue == 0 || g_cAdminsConfigMode.IntValue == 1)
+		SQLInitialize();
+
+	return Plugin_Stop;
 }
 
 
@@ -197,7 +225,9 @@ public void OnSQLSelect_Color(Database hParent, DBResultSet hChild, const char[]
 		return;
 	}
 
-	while (hChild.FetchRow())
+	// Replace the list, a reload must not append to the previous one
+	g_iColorListSize = 0;
+	while (g_iColorListSize < COLOR_LIST_MAX_LENGTH && hChild.FetchRow())
 	{
 		hChild.FetchString(0, g_sColorList[g_iColorListSize][0], sizeof(g_sColorList[][]));
 		hChild.FetchString(1, g_sColorList[g_iColorListSize][1], sizeof(g_sColorList[][]));
