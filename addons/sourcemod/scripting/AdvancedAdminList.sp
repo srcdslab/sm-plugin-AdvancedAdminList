@@ -55,12 +55,14 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.10",
+	version = "2.1.11",
 	url = ""
 };
 
 public void OnPluginStart()
 {
+	LoadTranslations("AdvancedAdminList.phrases");
+
 	g_cAdminsRealNames = CreateConVar("sm_admins_real_names", "1", "0 = disabled, 1 = enable in game admin name display", 0, true, 0.0, true, 1.0);
 	g_cAdminsNameColor = CreateConVar("sm_admins_name_color", "{green}", "What color should be displayed for admin names");
 	g_cAdminsNameSeparatorColor = CreateConVar("sm_admins_name_separator_color", "{default}", "What color should be displayed for separating admin names");
@@ -101,9 +103,9 @@ public Action Command_ReloadConfigOverride(int client, int argc)
 	ResetColorListOverride();
 
 	if (LoadConfigOverride(ADMIN_CONFIG_OVERRIDE))
-		CPrintToChat(client, "Successfully reloaded the admin config override");
+		CPrintToChat(client, "%t", "Config Override Reloaded");
 	else
-		CPrintToChat(client, "There was an error reloading the admin config override");
+		CPrintToChat(client, "%t", "Config Override Reload Failed");
 	return Plugin_Handled;
 }
 
@@ -367,7 +369,7 @@ public Action Command_Admins(int client, const char[] command, int argc)
 
 public void printAdminList(int client, char[][] resolvedAdminsAndGroups, int resolvedAdminGroupsLength)
 {
-	CPrintToChat(client, "{green}[SM] {lightgreen}Admins %s", resolvedAdminGroupsLength <= 0 ? "are offline" : "currently online:");
+	CPrintToChat(client, "{green}[SM] {lightgreen}%t", resolvedAdminGroupsLength <= 0 ? "Admins Offline" : "Admins Online");
 
 	for (int i = 0; i < resolvedAdminGroupsLength; i++)
 		CPrintToChat(client, "%s", resolvedAdminsAndGroups[i]);

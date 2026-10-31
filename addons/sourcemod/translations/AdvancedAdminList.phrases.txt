@@ -1,0 +1,43 @@
+"Phrases"
+{
+	"Config Override Reloaded"
+	{
+		"en"		"Successfully reloaded the admin config override."
+		"fr"		"La surcharge de la config admin a été rechargée avec succès."
+		"ru"		"Файл переопределения конфигурации админов успешно перезагружен."
+		"es"		"Se recargó correctamente la anulación de la configuración de admins."
+		"de"		"Die Admin-Konfigurationsüberschreibung wurde erfolgreich neu geladen."
+		"pt"		"A substituição da configuração de admins foi recarregada com sucesso."
+		"chi"		"已成功重新加载管理员配置覆盖文件。"
+	}
+	"Config Override Reload Failed"
+	{
+		"en"		"There was an error reloading the admin config override."
+		"fr"		"Une erreur est survenue lors du rechargement de la surcharge de la config admin."
+		"ru"		"Ошибка при перезагрузке файла переопределения конфигурации админов."
+		"es"		"Se produjo un error al recargar la anulación de la configuración de admins."
+		"de"		"Beim Neuladen der Admin-Konfigurationsüberschreibung ist ein Fehler aufgetreten."
+		"pt"		"Ocorreu um erro ao recarregar a substituição da configuração de admins."
+		"chi"		"重新加载管理员配置覆盖文件时出错。"
+	}
+	"Admins Offline"
+	{
+		"en"		"Admins are offline"
+		"fr"		"Les admins sont hors ligne"
+		"ru"		"Админы не в сети"
+		"es"		"Los admins están desconectados"
+		"de"		"Admins sind offline"
+		"pt"		"Os admins estão offline"
+		"chi"		"管理员均不在线"
+	}
+	"Admins Online"
+	{
+		"en"		"Admins currently online:"
+		"fr"		"Admins actuellement en ligne :"
+		"ru"		"Админы в сети:"
+		"es"		"Admins conectados actualmente:"
+		"de"		"Admins aktuell online:"
+		"pt"		"Admins online no momento:"
+		"chi"		"当前在线管理员："
+	}
+}
