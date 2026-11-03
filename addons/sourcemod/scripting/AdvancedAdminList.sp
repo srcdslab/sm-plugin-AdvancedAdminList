@@ -55,7 +55,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.11",
+	version = "2.1.12",
 	url = ""
 };
 
@@ -103,9 +103,9 @@ public Action Command_ReloadConfigOverride(int client, int argc)
 	ResetColorListOverride();
 
 	if (LoadConfigOverride(ADMIN_CONFIG_OVERRIDE))
-		CPrintToChat(client, "%t", "Config Override Reloaded");
+		CReplyToCommand(client, "%t", "Config Override Reloaded");
 	else
-		CPrintToChat(client, "%t", "Config Override Reload Failed");
+		CReplyToCommand(client, "%t", "Config Override Reload Failed");
 	return Plugin_Handled;
 }
 
@@ -119,6 +119,7 @@ stock bool LoadConfigOverride(char[] sFilename)
 	if (!kv.ImportFromFile(sFilepath))
 	{
 		LogMessage("File missing, please make sure \"%s\" is in the \"sourcemod/configs\" folder.", sFilename);
+		delete kv;
 		return false;
 	}
 
