@@ -55,7 +55,7 @@ public Plugin myinfo =
 	name = "Advanced Admin List",
 	author = "maxime1907, .Rushaway",
 	description = "An advanced admin list system",
-	version = "2.1.12",
+	version = "2.1.13",
 	url = ""
 };
 
