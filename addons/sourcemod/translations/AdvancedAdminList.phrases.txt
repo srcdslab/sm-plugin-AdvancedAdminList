@@ -9,6 +9,12 @@
 		"de"		"Die Admin-Konfigurationsüberschreibung wurde erfolgreich neu geladen."
 		"pt"		"A substituição da configuração de admins foi recarregada com sucesso."
 		"chi"		"已成功重新加载管理员配置覆盖文件。"
+		"pl"		"Pomyślnie przeładowano nadpisanie konfiguracji adminów."
+		"tr"		"Admin yapılandırma geçersiz kılma ayarı başarıyla yeniden yüklendi."
+		"it"		"Override della configurazione admin ricaricato con successo."
+		"ua"		"Перевизначення конфігурації адмінів успішно перезавантажено."
+		"zho"		"已成功重新載入管理員設定覆寫。"
+		"cze"		"Přepsání konfigurace adminů bylo úspěšně znovu načteno."
 	}
 	"Config Override Reload Failed"
 	{
@@ -19,6 +25,12 @@
 		"de"		"Beim Neuladen der Admin-Konfigurationsüberschreibung ist ein Fehler aufgetreten."
 		"pt"		"Ocorreu um erro ao recarregar a substituição da configuração de admins."
 		"chi"		"重新加载管理员配置覆盖文件时出错。"
+		"pl"		"Wystąpił błąd podczas przeładowywania nadpisania konfiguracji adminów."
+		"tr"		"Admin yapılandırma geçersiz kılma ayarı yeniden yüklenirken bir hata oluştu."
+		"it"		"Si è verificato un errore durante il ricaricamento dell'override della configurazione admin."
+		"ua"		"Сталася помилка під час перезавантаження перевизначення конфігурації адмінів."
+		"zho"		"重新載入管理員設定覆寫時發生錯誤。"
+		"cze"		"Při opětovném načítání přepsání konfigurace adminů došlo k chybě."
 	}
 	"Admins Offline"
 	{
@@ -29,6 +41,12 @@
 		"de"		"Admins sind offline"
 		"pt"		"Os admins estão offline"
 		"chi"		"管理员均不在线"
+		"pl"		"Admini są offline"
+		"tr"		"Adminler çevrimdışı"
+		"it"		"Gli admin sono offline"
+		"ua"		"Адміни не в мережі"
+		"zho"		"管理員不在線上"
+		"cze"		"Admini jsou offline"
 	}
 	"Admins Online"
 	{
@@ -39,5 +57,11 @@
 		"de"		"Admins aktuell online:"
 		"pt"		"Admins online no momento:"
 		"chi"		"当前在线管理员："
+		"pl"		"Admini aktualnie online:"
+		"tr"		"Şu anda çevrimiçi adminler:"
+		"it"		"Admin attualmente online:"
+		"ua"		"Адміни зараз в мережі:"
+		"zho"		"目前在線的管理員："
+		"cze"		"Admini aktuálně online:"
 	}
 }
